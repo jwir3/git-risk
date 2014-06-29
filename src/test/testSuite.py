@@ -36,5 +36,20 @@ class TestSpecifications(unittest.TestCase):
     self.assertEqual('jm-1922', tickets[2])
     self.assertEqual('jm-1021', tickets[3])
 
+  def test_BugTicketNames(self):
+    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+")
+    tickets = gitRisk.getTicketNamesFromFile('data/bugtickets.txt')
+
+    # We expect 8 tickets
+    self.assertEqual(8, len(tickets))
+    self.assertEqual('Bug 1028867', tickets[0])
+    self.assertEqual('Bug 1017835', tickets[1])
+    self.assertEqual('Bug 1017835', tickets[2])
+    self.assertEqual('bug 1018551', tickets[3])
+    self.assertEqual('bug 1018034', tickets[4])
+    self.assertEqual('Bug 1029104', tickets[5])
+    self.assertEqual('Bug 1029104', tickets[6])
+    self.assertEqual('Bug 1029104', tickets[7])
+
 if __name__ == '__main__':
   unittest.main()

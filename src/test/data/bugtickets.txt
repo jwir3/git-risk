@@ -1,0 +1,8 @@
+Bug 1028867 - Add a --latin1-strings shell flag. r=luke
+Bug 1017835: use array delete for SCTP/DTLS SendPacket data r=jib DONTBUILD
+Bug 1017835: use array delete for SCTP/DTLS SendPacket data
+bug 1018551 - clean up redundancy in the font/shaper code. r=jdaggett
+bug 1018034 - Remove the "gfx.font_rendering.harfbuzz.scripts" pref. r=jfkthame
+Bug 1029104 - Convert XPathExpression to WebIDL bindings, add WebIDL API and switch to the WebIDL binding. r=bz.
+Bug 1029104 - Convert XPathExpression to WebIDL bindings, make XPathExpression hold a weak reference to the document. r=bz.
+Bug 1029104 - Convert XPathExpression to WebIDL bindings, move Ev
