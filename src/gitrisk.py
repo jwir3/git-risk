@@ -9,10 +9,10 @@ class GitRisk:
   def __init__(self, aSpecString):
     self.mSpecString = aSpecString
 
-  def _runTestWithFile(self, aFileName, aRegex):
+  def _runTestWithFile(self, aFileName):
     f = open(aFileName)
     for line in f:
-      result = re.search(aRegex, line)
+      result = re.search(self.mSpecString, line)
       print(result.group(0))
 
 def createParser():
@@ -35,7 +35,7 @@ def main():
   searchString = config.get('main', 'ticket-spec')
   gitrisk = GitRisk(searchString)
   if parsedArgs.testFile:
-      gitrisk._runTestWithFile(parsedArgs.testFile, searchString)
+      gitrisk._runTestWithFile(parsedArgs.testFile)
 
 if __name__ == '__main__':
   main()
