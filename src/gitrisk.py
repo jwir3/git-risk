@@ -9,18 +9,19 @@ class GitRisk:
   def __init__(self, aSpecString):
     self.mSpecString = aSpecString
 
-  def _runTestWithFile(self, aFileName):
+  def getTicketNamesFromFile(self, aFileName):
     f = open(aFileName)
+    results = []
     for line in f:
       result = re.search(self.mSpecString, line)
-      print(result.group(0))
+      results.append(result.group(0))
+    return results
 
 def createParser():
   parser = argparse.ArgumentParser(description='''
   Parse git log files for potential regression risks after a merge
   ''', add_help=True)
   parser.add_argument('-c', '--config', dest='confFile', help='Specify a configuration file', action='store')
-  parser.add_argument('-t', '--test', dest='testFile', help='Specify a test file to test against with the given config file', action='store', default=False)
   return parser
 
 def main():
@@ -34,8 +35,6 @@ def main():
   config.read(parsedArgs.confFile)
   searchString = config.get('main', 'ticket-spec')
   gitrisk = GitRisk(searchString)
-  if parsedArgs.testFile:
-      gitrisk._runTestWithFile(parsedArgs.testFile)
 
 if __name__ == '__main__':
   main()
