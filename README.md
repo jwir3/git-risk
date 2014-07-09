@@ -34,7 +34,7 @@ Bug #14
 Bug #0
 
 Note: The following commits did not have tickets associated with them (or git-risk
-couldn't find them), so there might be undocumented issues that have regression(s)
+couldn\'t find them), so there might be undocumented issues that have regression(s)
 stemming from these commits' interactions with the merge.
 
 c2a881d (No Ticket): Added git-risk-info and renamed README.txt to README.md.
@@ -60,7 +60,9 @@ time being) with `git-risk`. The most logical place to use `git-risk` is the
 1. Edit `.git/hooks/pre-commit` in your source folder (or globally, if you wish
    to enable it for all git repositories on your local machine).
 2. Add the following line to `.git/hooks/pre-commit`:
-   `git-risk -m \`git rev-list -1 HEAD\``
+```
+   git-risk -m `git rev-list -1 HEAD`
+```
 
 That's it! The `-m` option is only to specify that a 'pass' result should be
 returned if the commit in question isn't a merge commit (since git-risk can't
