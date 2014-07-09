@@ -25,7 +25,7 @@ The output of this command will give you a series of tickets/issues/bugs that
 can be checked for regressions:
 
 _Example (Taken from test repository included in test data/ directory):_
-```bash
+```
 $ git-risk ddcdb34
 Tickets potentially affected by:
 ddcdb34 Merge branch 'bug-14'
@@ -34,8 +34,8 @@ Bug #14
 Bug #0
 
 Note: The following commits did not have tickets associated with them (or git-risk
-couldn&#39;t find them), so there might be undocumented issues that have regression(s)
-stemming from these commits&#39; interactions with the merge.
+couldn't find them), so there might be undocumented issues that have regression(s)
+stemming from these commits' interactions with the merge.
 
 c2a881d (No Ticket): Added git-risk-info and renamed README.txt to README.md.
 ```
