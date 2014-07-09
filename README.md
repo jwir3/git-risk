@@ -34,8 +34,8 @@ Bug #14
 Bug #0
 
 Note: The following commits did not have tickets associated with them (or git-risk
-couldn\'t find them), so there might be undocumented issues that have regression(s)
-stemming from these commits' interactions with the merge.
+couldn&#39;t find them), so there might be undocumented issues that have regression(s)
+stemming from these commits&#39; interactions with the merge.
 
 c2a881d (No Ticket): Added git-risk-info and renamed README.txt to README.md.
 ```
