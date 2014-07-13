@@ -2,6 +2,8 @@ import argparse
 import configparser
 import sys
 import re
+import os
+import os.path
 
 class GitRisk:
   mSpecString = None
@@ -20,14 +22,14 @@ class GitRisk:
     return results
 
   def getRepoPath(self):
-    return self.mRepoPath
+    return os.path.abspath(self.mRepoPath)
 
 def createParser():
   parser = argparse.ArgumentParser(description='''
   Parse git log files for potential regression risks after a merge
   ''', add_help=True)
   parser.add_argument('-c', '--config', dest='confFile', help='Specify a configuration file', action='store')
-  parser.add_argument('-r', '--repository', dest='repo', help='Specify a directory on which to operate', action='store')
+  parser.add_argument('-r', '--repository', dest='repo', help='Specify a directory on which to operate', action='store', default=".")
   return parser
 
 def main():

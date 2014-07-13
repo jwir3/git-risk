@@ -30,7 +30,7 @@ class TestSpecifications(unittest.TestCase):
     gitRisk = self.mGitRiskModule.GitRisk("(JM|jm)-[0-9]+")
     tickets = gitRisk.getTicketNamesFromFile('data/testjmtickets.txt')
 
-    self.assertEqual(".", gitRisk.getRepoPath())
+    self.assertEqual(os.path.abspath("."), gitRisk.getRepoPath())
 
     # We expect 4 tickets, JM-1966, JM-1726, jm-1922, and jm-1021
     self.assertEqual('JM-1966', tickets[0])
@@ -42,7 +42,7 @@ class TestSpecifications(unittest.TestCase):
     gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+")
     tickets = gitRisk.getTicketNamesFromFile('data/bugtickets.txt')
 
-    self.assertEqual(".", gitRisk.getRepoPath())
+    self.assertEqual(os.path.abspath("."), gitRisk.getRepoPath())
 
     # We expect 8 tickets
     self.assertEqual(8, len(tickets))
