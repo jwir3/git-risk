@@ -10,7 +10,7 @@ class TestSpecifications(unittest.TestCase):
   def setUp(self):
     self.mTempDir = tempfile.mkdtemp(prefix='gitRiskTest')
     self.assertTrue(os.path.exists(self.mTempDir))
-    zipFh = open('data/testRepo.zip', 'rb')
+    zipFh = open('data/testrepo.zip', 'rb')
     testRepoZip = zipfile.ZipFile(zipFh)
     for name in testRepoZip.namelist():
       testRepoZip.extract(name, self.mTempDir)
@@ -18,7 +18,7 @@ class TestSpecifications(unittest.TestCase):
 
     # The temp directory should be populated and contain
     # at least a git-risk-info file.
-    pathToTestRepo = os.path.join(self.mTempDir, 'testRepo')
+    pathToTestRepo = os.path.join(self.mTempDir, 'testrepo')
     self.assertTrue(os.path.exists(os.path.join(pathToTestRepo, "git-risk-info")))
     self.mGitRiskModule = imp.load_source('gitrisk', '../gitrisk.py')
 
@@ -30,6 +30,8 @@ class TestSpecifications(unittest.TestCase):
     gitRisk = self.mGitRiskModule.GitRisk("(JM|jm)-[0-9]+")
     tickets = gitRisk.getTicketNamesFromFile('data/testjmtickets.txt')
 
+    self.assertEqual(".", gitRisk.getRepoPath())
+
     # We expect 4 tickets, JM-1966, JM-1726, jm-1922, and jm-1021
     self.assertEqual('JM-1966', tickets[0])
     self.assertEqual('JM-1726', tickets[1])
@@ -39,6 +41,8 @@ class TestSpecifications(unittest.TestCase):
   def test_BugTicketNames(self):
     gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+")
     tickets = gitRisk.getTicketNamesFromFile('data/bugtickets.txt')
+
+    self.assertEqual(".", gitRisk.getRepoPath())
 
     # We expect 8 tickets
     self.assertEqual(8, len(tickets))
@@ -50,6 +54,13 @@ class TestSpecifications(unittest.TestCase):
     self.assertEqual('Bug 1029104', tickets[5])
     self.assertEqual('Bug 1029104', tickets[6])
     self.assertEqual('Bug 1029104', tickets[7])
+
+  def test_getRepo(self):
+    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", self.mTempDir)
+    self.assertEqual(self.mTempDir, gitRisk.getRepoPath())
+
+#  def test_getMergeBase(self):
+#    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+")
 
 if __name__ == '__main__':
   unittest.main()
