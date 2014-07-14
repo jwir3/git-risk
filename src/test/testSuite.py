@@ -7,6 +7,8 @@ import tempfile
 import shutil
 
 class TestSpecifications(unittest.TestCase):
+  mGitRepoPath = None
+
   def setUp(self):
     self.mTempDir = tempfile.mkdtemp(prefix='gitRiskTest')
     self.assertTrue(os.path.exists(self.mTempDir))
@@ -18,8 +20,8 @@ class TestSpecifications(unittest.TestCase):
 
     # The temp directory should be populated and contain
     # at least a git-risk-info file.
-    pathToTestRepo = os.path.join(self.mTempDir, 'testrepo')
-    self.assertTrue(os.path.exists(os.path.join(pathToTestRepo, "git-risk-info")))
+    self.mGitRepoPath = os.path.join(self.mTempDir, 'testrepo')
+    self.assertTrue(os.path.exists(os.path.join(self.mGitRepoPath, "git-risk-info")))
     self.mGitRiskModule = imp.load_source('gitrisk', '../gitrisk.py')
 
   def tearDown(self):
@@ -56,11 +58,29 @@ class TestSpecifications(unittest.TestCase):
     self.assertEqual('Bug 1029104', tickets[7])
 
   def test_getRepo(self):
-    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", self.mTempDir)
-    self.assertEqual(self.mTempDir, gitRisk.getRepoPath())
+    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", self.mGitRepoPath)
+    self.assertEqual(self.mGitRepoPath, gitRisk.getRepoPath())
 
-#  def test_getMergeBase(self):
-#    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+")
+  def test_getCommitFromHash(self):
+    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", self.mGitRepoPath)
+    commit = gitRisk.getCommitFromHash('c2a881d')
+    self.assertTrue(commit)
+    self.assertEqual("c2a881d4c5753a2e6e6e1130d0e27b17a44b4c4c", commit.hexsha)
+
+  def test_getMergeBase(self):
+    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", self.mGitRepoPath)
+
+    mergeBaseSingle = gitRisk.getMergeBase('c2a881d')
+    self.assertEqual("c2a881d4c5753a2e6e6e1130d0e27b17a44b4c4c", mergeBaseSingle.hexsha)
+
+    mergeBaseDual = gitRisk.getMergeBase("c2a881d", "6ff4935")
+    self.assertEquals("7b9609a1cacce59b81963762f885d7a25453e72e", mergeBaseDual.hexsha)
+
+    mergeBaseTriple1 = gitRisk.getMergeBase("c2a881d", "6ff4935", "6a5c798")
+    self.assertEquals("7b9609a1cacce59b81963762f885d7a25453e72e", mergeBaseTriple1.hexsha)
+
+    mergeBaseTriple2 = gitRisk.getMergeBase("6ff4935", "6a5c798", "88f06c9")
+    self.assertEquals("88f06c9cf2c3bccf3df73a6c2bcb8a34549ef20f", mergeBaseTriple2.hexsha)
 
 if __name__ == '__main__':
   unittest.main()

@@ -4,14 +4,17 @@ import sys
 import re
 import os
 import os.path
+from git import *
 
 class GitRisk:
   mSpecString = None
   mRepoPath = "."
+  mRepo = None
 
   def __init__(self, aSpecString, repo="."):
     self.mSpecString = aSpecString
     self.mRepoPath = repo
+    self.mRepo = Repo(self.mRepoPath)
 
   def getTicketNamesFromFile(self, aFileName):
     f = open(aFileName)
@@ -23,6 +26,34 @@ class GitRisk:
 
   def getRepoPath(self):
     return os.path.abspath(self.mRepoPath)
+
+  def getCommitFromHash(self, commitHash):
+    commit = self.mRepo.commit(commitHash)
+    return commit
+
+  def getMergeBase(self, *commitHashes):
+    # If we don't have any commits, then we can't get the
+    # merge base.
+    if len(commitHashes) == 0:
+      return None
+
+    # If there's only one commit, then it's its own merge base.
+    if len(commitHashes) == 1:
+      (commitHash,) = commitHashes
+      return self.getCommitFromHash(commitHash)
+
+    # If there are exactly two commits, then we use git-merge in the
+    # normal way.
+    if len(commitHashes) == 2:
+      output = self.mRepo.git.merge_base(commitHashes)
+    else:
+      # If there are more than two commits, then we want to find the
+      # octopus merge base because we don't want to consider a hypothetical
+      # merge base (we're being conservative)
+      output = self.mRepo.git.merge_base(commitHashes)
+
+    return self.getCommitFromHash(output)
+
 
 def createParser():
   parser = argparse.ArgumentParser(description='''
