@@ -80,7 +80,7 @@ class TestSpecifications(unittest.TestCase):
     self.assertEquals("7b9609a1cacce59b81963762f885d7a25453e72e", mergeBaseTriple1.hexsha)
 
     mergeBaseTriple2 = gitRisk.getMergeBase("6ff4935", "6a5c798", "88f06c9")
-    self.assertEquals("88f06c9cf2c3bccf3df73a6c2bcb8a34549ef20f", mergeBaseTriple2.hexsha)
+    self.assertEquals("deb5eb357ef6677301b629922279cf2221d4a91d", mergeBaseTriple2.hexsha)
 
 if __name__ == '__main__':
   unittest.main()

@@ -50,10 +50,7 @@ class GitRisk:
       # If there are more than two commits, then we want to find the
       # octopus merge base because we don't want to consider a hypothetical
       # merge base (we're being conservative)
-
-      # NOTE: The lack of an "octopus=True" flag here is a bug with GitPython:
-      # https://github.com/gitpython-developers/GitPython/issues/171
-      output = self.mRepo.git.merge_base(commitHashes)
+      output = self.mRepo.git.merge_base(commitHashes, octopus=True)
 
     return self.getCommitFromHash(output)
 
