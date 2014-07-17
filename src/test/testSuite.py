@@ -41,7 +41,8 @@ class TestSpecifications(unittest.TestCase):
     self.assertEqual('jm-1021', tickets[3])
 
   def test_BugTicketNames(self):
-    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+")
+    print("Starting test_BugTicketNames")
+    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", debug=True)
     tickets = gitRisk.getTicketNamesFromFile('data/bugtickets.txt')
 
     self.assertEqual(os.path.abspath("."), gitRisk.getRepoPath())
@@ -82,12 +83,20 @@ class TestSpecifications(unittest.TestCase):
     mergeBaseTriple2 = gitRisk.getMergeBase("6ff4935", "6a5c798", "88f06c9")
     self.assertEquals("deb5eb357ef6677301b629922279cf2221d4a91d", mergeBaseTriple2.hexsha)
 
-  def test_checkMerge(self):
-    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", self.mGitRepoPath, debug=True)
-    bugs = gitRisk.checkMerge("d8bb7b32e43bf27f49a4dc3d27d9f799e829db9d")
+  # def test_checkMerge(self):
+  #   gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", self.mGitRepoPath, debug=True)
+  #   bugs = gitRisk.checkMerge("d8bb7b32e43bf27f49a4dc3d27d9f799e829db9d")
+
+  def test_getTicketNamesFromCommit(self):
+    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ \#*[0-9]+", self.mGitRepoPath, debug=True)
+    commitWithMultipleBugs = gitRisk.getCommitFromHash('e4a06631036107e6a2ba5bd9946c20af4f367dff')
+    (tickets,commitsWithoutTickets) = gitRisk.getTicketNamesFromCommit(commitWithMultipleBugs)
+    self.assertTrue("Bug #27" in tickets)
+    self.assertTrue("Bug #72" in tickets)
+    self.assertEquals(len(commitsWithoutTickets), 0)
 
   def test_findSuspectCommits(self):
-    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", self.mGitRepoPath, debug=True)
+    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ (\#)*[0-9]+", self.mGitRepoPath, debug=True)
     suspectCommits = gitRisk.findSuspectCommits(gitRisk.getCommitFromHash('6a5c7'), gitRisk.getCommitFromHash('c2a88'))
     self.assertEquals(len(suspectCommits), 3)
 

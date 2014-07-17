@@ -18,13 +18,45 @@ class GitRisk:
     self.mDebugMode = debug
     self.mRepo = Repo(self.mRepoPath)
 
+  def getTicketNamesFromCommit(self, aCommitObj):
+    tickets = set()
+    commitsWithoutTickets = set()
+    commitMessage = aCommitObj.message
+    resultFoundForCommit = False
+    for line in commitMessage.split("\n"):
+      # Find the first instance of the particular ticket
+      if len(line.lstrip().rstrip()) != 0:
+        result = self.getTicketNamesFromLine(line)
+        if result:
+          tickets.add(result)
+        else:
+          commitsWithoutTickets.add(aCommitObj.hexsha)
+    return (tickets, commitsWithoutTickets)
+
   def getTicketNamesFromFile(self, aFileName):
     f = open(aFileName)
     results = []
     for line in f:
-      result = re.search(self.mSpecString, line)
-      results.append(result.group(0))
+      if len(line.lstrip().rstrip()) != 0:
+        results.append(self.getTicketNamesFromLine(line))
+
+    if self.mDebugMode:
+      print("getTicketNamesFromFile: " + str(results))
     return results
+
+  def getTicketNamesFromLine(self, aLine):
+    result = re.search(self.mSpecString, aLine)
+    if not result and self.mDebugMode:
+      print("Line was empty?")
+    elif self.mDebugMode:
+      print("Result: " + str(result.group(0)))
+
+    # Handle the case where nothing was found in the commit message that
+    # matched the specification.
+    if not result:
+      return None
+
+    return result.group(0)
 
   def getRepoPath(self):
     return os.path.abspath(self.mRepoPath)
