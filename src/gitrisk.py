@@ -59,7 +59,7 @@ class GitRisk:
     if not result:
       return None
 
-    return result.group(0)
+    return result.group(0).rstrip().lstrip()
 
   def getRepoPath(self):
     return os.path.abspath(self.mRepoPath)

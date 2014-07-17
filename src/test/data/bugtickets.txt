@@ -6,3 +6,4 @@ bug 1018034 - Remove the "gfx.font_rendering.harfbuzz.scripts" pref. r=jfkthame
 Bug 1029104 - Convert XPathExpression to WebIDL bindings, add WebIDL API and switch to the WebIDL binding. r=bz.
 Bug 1029104 - Convert XPathExpression to WebIDL bindings, make XPathExpression hold a weak reference to the document. r=bz.
 Bug 1029104 - Convert XPathExpression to WebIDL bindings, move Ev
+   Bug 19283: Do something special with bug 1029104.
