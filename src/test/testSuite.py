@@ -82,5 +82,17 @@ class TestSpecifications(unittest.TestCase):
     mergeBaseTriple2 = gitRisk.getMergeBase("6ff4935", "6a5c798", "88f06c9")
     self.assertEquals("deb5eb357ef6677301b629922279cf2221d4a91d", mergeBaseTriple2.hexsha)
 
+  def test_checkMerge(self):
+    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", self.mGitRepoPath, debug=True)
+    bugs = gitRisk.checkMerge("d8bb7b32e43bf27f49a4dc3d27d9f799e829db9d")
+
+  def test_findSuspectCommits(self):
+    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", self.mGitRepoPath, debug=True)
+    suspectCommits = gitRisk.findSuspectCommits(gitRisk.getCommitFromHash('6a5c7'), gitRisk.getCommitFromHash('c2a88'))
+    self.assertEquals(len(suspectCommits), 3)
+    self.assertEquals(suspectCommits[0].hexsha, "6a5c7989edfaded4241ea21a742a9b93d5205b47")
+    self.assertEquals(suspectCommits[1].hexsha, "deb5eb357ef6677301b629922279cf2221d4a91d")
+    self.assertEquals(suspectCommits[2].hexsha, "c2a881d4c5753a2e6e6e1130d0e27b17a44b4c4c")
+
 if __name__ == '__main__':
   unittest.main()
