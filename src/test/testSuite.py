@@ -90,17 +90,24 @@ class TestSpecifications(unittest.TestCase):
   def test_getTicketNamesFromCommit(self):
     gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ \#*[0-9]+", self.mGitRepoPath, debug=True)
     commitWithMultipleBugs = gitRisk.getCommitFromHash('e4a06631036107e6a2ba5bd9946c20af4f367dff')
-    (tickets,commitsWithoutTickets) = gitRisk.getTicketNamesFromCommit(commitWithMultipleBugs)
+    tickets = gitRisk.getTicketNamesFromCommit(commitWithMultipleBugs)
     self.assertTrue("Bug #27" in tickets)
     self.assertTrue("Bug #72" in tickets)
-    self.assertEquals(len(commitsWithoutTickets), 0)
 
-    # Now for a more tricky test case.
+    # Now for a more tricky test case. The commit message for this ticket looks like:
+    # Bug #98: Replace name 'thingSearcher' accidentally added in bug #72 with 'thingMaker', which better describes the tool.
+    # It's expected that the function should return 'Bug #98', but NOT 'bug #72'.
     commitWithTextBugs = gitRisk.getCommitFromHash('52f15a65ebf84949bb56df7e7b1be9fb77ee6ce8')
-    (tickets, commitsWithoutTickets) = gitRisk.getTicketNamesFromCommit(commitWithTextBugs)
+    tickets = gitRisk.getTicketNamesFromCommit(commitWithTextBugs)
     self.assertEquals(len(tickets), 1)
     self.assertTrue("Bug #98" in tickets)
-    
+
+    # Let's check a commit that doesn't actually have a ticket associated
+    # with it.
+    commitWithNoTicket = gitRisk.getCommitFromHash("836ceeac65e9e9a4bc1aacf66f08a6ebb209fedb")
+    tickets = gitRisk.getTicketNamesFromCommit(commitWithNoTicket)
+    self.assertFalse(tickets)
+
   def test_findSuspectCommits(self):
     gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ (\#)*[0-9]+", self.mGitRepoPath, debug=True)
     suspectCommits = gitRisk.findSuspectCommits(gitRisk.getCommitFromHash('6a5c7'), gitRisk.getCommitFromHash('c2a88'))

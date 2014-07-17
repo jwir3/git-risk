@@ -29,9 +29,12 @@ class GitRisk:
         result = self.getTicketNamesFromLine(line)
         if result:
           tickets.add(result)
-        else:
-          commitsWithoutTickets.add(aCommitObj.hexsha)
-    return (tickets, commitsWithoutTickets)
+          resultFoundForCommit = True
+
+    if resultFoundForCommit:
+      return tickets
+    else:
+      return None
 
   def getTicketNamesFromFile(self, aFileName):
     f = open(aFileName)
