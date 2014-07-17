@@ -95,6 +95,12 @@ class TestSpecifications(unittest.TestCase):
     self.assertTrue("Bug #72" in tickets)
     self.assertEquals(len(commitsWithoutTickets), 0)
 
+    # Now for a more tricky test case.
+    commitWithTextBugs = gitRisk.getCommitFromHash('52f15a65ebf84949bb56df7e7b1be9fb77ee6ce8')
+    (tickets, commitsWithoutTickets) = gitRisk.getTicketNamesFromCommit(commitWithTextBugs)
+    self.assertEquals(len(tickets), 1)
+    self.assertTrue("Bug #98" in tickets)
+    
   def test_findSuspectCommits(self):
     gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ (\#)*[0-9]+", self.mGitRepoPath, debug=True)
     suspectCommits = gitRisk.findSuspectCommits(gitRisk.getCommitFromHash('6a5c7'), gitRisk.getCommitFromHash('c2a88'))
