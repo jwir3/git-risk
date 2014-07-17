@@ -90,9 +90,27 @@ class TestSpecifications(unittest.TestCase):
     gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", self.mGitRepoPath, debug=True)
     suspectCommits = gitRisk.findSuspectCommits(gitRisk.getCommitFromHash('6a5c7'), gitRisk.getCommitFromHash('c2a88'))
     self.assertEquals(len(suspectCommits), 3)
-    self.assertEquals(suspectCommits[0].hexsha, "6a5c7989edfaded4241ea21a742a9b93d5205b47")
-    self.assertEquals(suspectCommits[1].hexsha, "deb5eb357ef6677301b629922279cf2221d4a91d")
-    self.assertEquals(suspectCommits[2].hexsha, "c2a881d4c5753a2e6e6e1130d0e27b17a44b4c4c")
+
+    commitHashes = [x.hexsha for x in suspectCommits]
+    self.assertTrue("6a5c7989edfaded4241ea21a742a9b93d5205b47" in commitHashes)
+    self.assertTrue("deb5eb357ef6677301b629922279cf2221d4a91d" in commitHashes)
+    self.assertTrue("c2a881d4c5753a2e6e6e1130d0e27b17a44b4c4c" in commitHashes)
+
+    complexCommit1 = gitRisk.getCommitFromHash('836ceeac65e9e9a4bc1aacf66f08a6ebb209fedb')
+    complexCommit2 = gitRisk.getCommitFromHash('7b9609a1cacce59b81963762f885d7a25453e72e')
+    complexSuspectCommits = gitRisk.findSuspectCommits(complexCommit1, complexCommit2)
+    expectedCommits = {'836ceeac65e9e9a4bc1aacf66f08a6ebb209fedb',
+                       'd8bb7b32e43bf27f49a4dc3d27d9f799e829db9d',
+                       'f5813f80a012eabe625ecf12dac9efc3964f2d3d',
+                       '6a5c7989edfaded4241ea21a742a9b93d5205b47',
+                       'ddcdb34cd3dea82e47c50751d8b9b4b3b8c23e4e',
+                       'c2a881d4c5753a2e6e6e1130d0e27b17a44b4c4c',
+                       '6ff49357e0f3b9fa991bbd9b42e520f91723436e',
+                       '88f06c9cf2c3bccf3df73a6c2bcb8a34549ef20f',
+                       '7b9609a1cacce59b81963762f885d7a25453e72e'}
+    commitHashes2 = [x.hexsha for x in complexSuspectCommits]
+    for commitSha in expectedCommits:
+      self.assertTrue(commitSha in commitHashes2)
 
 if __name__ == '__main__':
   unittest.main()

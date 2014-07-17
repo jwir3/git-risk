@@ -74,7 +74,7 @@ class GitRisk:
     if self.mDebugMode:
       print("Commit range: " + str(commitList))
 
-    return commitList
+    return set(commitList)
 
   def checkMerge(self, shaHash):
     commit = self.getCommitFromHash(shaHash)
