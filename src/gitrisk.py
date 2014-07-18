@@ -45,6 +45,7 @@ class GitRisk:
 
     if self.mDebugMode:
       print("getTicketNamesFromFile: " + str(results))
+
     return results
 
   def getTicketNamesFromLine(self, aLine):
@@ -100,6 +101,9 @@ class GitRisk:
     return self.getCommitFromHash(output)
 
   def findSuspectCommits(self, aCommitObj, aAncestorCommitObj):
+    if self.mDebugMode:
+      print("***** findSuspectCommits - commits: " + aCommitObj.hexsha + ", " + aAncestorCommitObj.hexsha)
+
     commitRange = aAncestorCommitObj.hexsha + ".." + aCommitObj.hexsha
     commitList = [ x for x in self.mRepo.iter_commits(commitRange) ]
     if self.mDebugMode:
@@ -111,7 +115,7 @@ class GitRisk:
 
     return set(commitList)
 
-  def checkMerge(self, shaHash):
+  def getAllSuspectCommitsFromMerge(self, shaHash):
     commit = self.getCommitFromHash(shaHash)
 
     # There should be a commit that exists with this shaHash
@@ -121,19 +125,32 @@ class GitRisk:
     assert len(commit.parents) > 1, "commit " + shaHash + " is not a merge commit"
 
     commitParentShas = [parent.hexsha for parent in commit.parents]
-    if (self.mDebugMode):
-      print("commitParentShas: " + str(commitParentShas))
+
+    if self.mDebugMode:
+      print("getAllSuspectCommitsFromMerge - parents: " + str(commitParentShas))
 
     mergeBase = self.getMergeBase(*commitParentShas)
     # This should not be able to happen...
     assert mergeBase != None, "there was no merge base found for the commits"
 
-    suspectCommits = []
+    suspectCommits = set()
     for parent in commitParentShas:
       singlePathSuspects = self.findSuspectCommits(self.getCommitFromHash(parent), mergeBase)
-      suspectCommits = suspectCommits + list(set(singlePathSuspects) - set(suspectCommits))
+      print("**** Single path suspects: " + str(singlePathSuspects))
+      suspectCommits = suspectCommits.union(singlePathSuspects)
 
-    return None
+    # We also need to check this merge commit, in the event that someone added
+    # something to the merge that related to a ticket (probably not a good idea,
+    # but people are crazy).
+    suspectCommits.add(self.getCommitFromHash(shaHash))
+
+    return suspectCommits
+
+  def checkMerge(self, shaHash):
+    suspects = self.getAllSuspectCommitsFromMerge(shaHash)
+
+  def setDebugMode(self, aDebugMode):
+    self.mDebugMode = aDebugMode
 
 def createParser():
   parser = argparse.ArgumentParser(description='''

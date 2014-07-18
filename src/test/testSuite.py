@@ -25,7 +25,7 @@ class TestSpecifications(unittest.TestCase):
     self.mGitRepoPath = os.path.join(self.mTempDir, 'testrepo')
     self.assertTrue(os.path.exists(os.path.join(self.mGitRepoPath, "git-risk-info")))
     self.mGitRiskModule = imp.load_source('gitrisk', '../gitrisk.py')
-    self.mGitRiskObj = self.mGitRiskModule.GitRisk(specString, self.mGitRepoPath, debug=True)
+    self.mGitRiskObj = self.mGitRiskModule.GitRisk(specString, self.mGitRepoPath, debug=False)
 
   def tearDown(self):
     shutil.rmtree(self.mTempDir)
@@ -44,7 +44,7 @@ class TestSpecifications(unittest.TestCase):
     self.assertEqual('jm-1021', tickets[3])
 
   def test_BugTicketNames(self):
-    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", os.path.abspath("."), debug=True)
+    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", os.path.abspath("."), debug=False)
 
     tickets = gitRisk.getTicketNamesFromFile('data/bugtickets.txt')
 
@@ -84,7 +84,6 @@ class TestSpecifications(unittest.TestCase):
     self.assertEquals("deb5eb357ef6677301b629922279cf2221d4a91d", mergeBaseTriple2.hexsha)
 
   # def test_checkMerge(self):
-  #   self.mGitRiskObj = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", self.mGitRepoPath, debug=True)
   #   bugs = self.mGitRiskObj.checkMerge("d8bb7b32e43bf27f49a4dc3d27d9f799e829db9d")
 
   def test_getTicketNamesFromCommit(self):
@@ -138,6 +137,43 @@ class TestSpecifications(unittest.TestCase):
     commitHashes2 = [x.hexsha for x in complexSuspectCommits]
     for commitSha in expectedCommits:
       self.assertTrue(commitSha in commitHashes2)
+
+  def test_getAllSuspectCommitsFromMerge(self):
+    self.mGitRiskObj.setDebugMode(True)
+
+    expectedShas = set(['9cfed13838c730c748c482be0ea78e65883e6b94',
+                        '934d49610abc5e71fff06394b66e960f399a3412',
+                        '767afe6aeb9cdd79d0fcf09135f6fe993fad80c6',
+                        '0d75d6c25419313db8c7c85b19a2b7ae2e3020f7'])
+
+    suspects = self.mGitRiskObj.getAllSuspectCommitsFromMerge("9cfed13838c730c748c482be0ea78e65883e6b94")
+    suspectShas = set()
+    for suspect in suspects:
+      suspectShas.add(suspect.hexsha)
+
+    self.assertEquals(len(expectedShas), len(suspectShas))
+    self.assertEquals(expectedShas, suspectShas)
+
+    # Now, a more complex situation.
+    expectedShortShas = set(['d8bb',
+                             'f5813',
+                             'ddcdb',
+                             '6a5c',
+                             '6ff49',
+                             '88f06',
+                             'deb5eb',
+                             'c2a88'])
+    expectedShas = set([])
+
+    for shortSha in expectedShortShas:
+      print("Adding: " + shortSha)
+      expectedShas.add(self.mGitRiskObj.getCommitFromHash(shortSha).hexsha)
+
+    suspects = self.mGitRiskObj.getAllSuspectCommitsFromMerge('d8bb7b32e43bf27f49a4dc3d27d9f799e829db9d')
+    suspectShas = set()
+    for suspect in suspects:
+      suspectShas.add(suspect.hexsha)
+    self.assertEquals(expectedShas, suspectShas)
 
 if __name__ == '__main__':
   unittest.main()
