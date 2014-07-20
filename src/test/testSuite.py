@@ -83,9 +83,6 @@ class TestSpecifications(unittest.TestCase):
     mergeBaseTriple2 = self.mGitRiskObj.getMergeBase("6ff4935", "6a5c798", "88f06c9")
     self.assertEquals("deb5eb357ef6677301b629922279cf2221d4a91d", mergeBaseTriple2.hexsha)
 
-  # def test_checkMerge(self):
-  #   bugs = self.mGitRiskObj.checkMerge("d8bb7b32e43bf27f49a4dc3d27d9f799e829db9d")
-
   def test_getTicketNamesFromCommit(self):
     commitWithMultipleBugs = self.mGitRiskObj.getCommitFromHash('e4a06631036107e6a2ba5bd9946c20af4f367dff')
     tickets = self.mGitRiskObj.getTicketNamesFromCommit(commitWithMultipleBugs)
@@ -139,8 +136,6 @@ class TestSpecifications(unittest.TestCase):
       self.assertTrue(commitSha in commitHashes2)
 
   def test_getAllSuspectCommitsFromMerge(self):
-    self.mGitRiskObj.setDebugMode(True)
-
     expectedShas = set(['9cfed13838c730c748c482be0ea78e65883e6b94',
                         '934d49610abc5e71fff06394b66e960f399a3412',
                         '767afe6aeb9cdd79d0fcf09135f6fe993fad80c6',
@@ -166,7 +161,6 @@ class TestSpecifications(unittest.TestCase):
     expectedShas = set([])
 
     for shortSha in expectedShortShas:
-      print("Adding: " + shortSha)
       expectedShas.add(self.mGitRiskObj.getCommitFromHash(shortSha).hexsha)
 
     suspects = self.mGitRiskObj.getAllSuspectCommitsFromMerge('d8bb7b32e43bf27f49a4dc3d27d9f799e829db9d')
@@ -174,6 +168,17 @@ class TestSpecifications(unittest.TestCase):
     for suspect in suspects:
       suspectShas.add(suspect.hexsha)
     self.assertEquals(expectedShas, suspectShas)
+
+  def test_checkMerge(self):
+    (tickets, commitsWithoutTickets) = self.mGitRiskObj.checkMerge('9cfed13838c730c748c482be0ea78e65883e6b94')
+    expectedTickets = set(['Bug 143'])
+    expectedShortShas = set(['767afe', '0d75d'])
+    expectedCommits = set()
+    for shortSha in expectedShortShas:
+      expectedCommits.add(self.mGitRiskObj.getCommitFromHash(shortSha))
+
+    self.assertEquals(expectedCommits, commitsWithoutTickets)
+    self.assertEquals(expectedTickets, tickets)
 
 if __name__ == '__main__':
   unittest.main()

@@ -62,6 +62,9 @@ class GitRisk:
 
     return result.group(0).rstrip().lstrip()
 
+  def isMergeCommit(self, aCommitObj):
+    return len(aCommitObj.parents) > 1
+
   def getRepoPath(self):
     return os.path.abspath(self.mRepoPath)
 
@@ -136,7 +139,6 @@ class GitRisk:
     suspectCommits = set()
     for parent in commitParentShas:
       singlePathSuspects = self.findSuspectCommits(self.getCommitFromHash(parent), mergeBase)
-      print("**** Single path suspects: " + str(singlePathSuspects))
       suspectCommits = suspectCommits.union(singlePathSuspects)
 
     # We also need to check this merge commit, in the event that someone added
@@ -149,8 +151,25 @@ class GitRisk:
   def checkMerge(self, shaHash):
     suspects = self.getAllSuspectCommitsFromMerge(shaHash)
 
+    allTickets = set()
+    commitsWithoutTickets = set()
+    for suspectCommit in suspects:
+      tickets = self.getTicketNamesFromCommit(suspectCommit)
+      if not tickets:
+        # We didn't find a ticket for this commit. This could be expected, though,
+        # if this is a merge commit.
+        if not self.isMergeCommit(suspectCommit):
+          commitsWithoutTickets.add(suspectCommit)
+      else:
+        allTickets = allTickets.union(tickets)
+
+    return (allTickets, commitsWithoutTickets)
+
   def setDebugMode(self, aDebugMode):
     self.mDebugMode = aDebugMode
+
+  def getOneLineCommitMessage(self, aCommitSha):
+    return self.mRepo.git.log(aCommitSha, oneline=True, n=1)
 
 def createParser():
   parser = argparse.ArgumentParser(description='''
@@ -158,13 +177,13 @@ def createParser():
   ''', add_help=True)
   parser.add_argument('-c', '--config', dest='confFile', help='Specify a configuration file', action='store')
   parser.add_argument('-r', '--repository', dest='repo', help='Specify a directory on which to operate', action='store', default=".")
-  parser.add_argument('-m', '--merge', dest='mergeCommit', help='Specify an SHA hash for a merge commit for which git-risk should find potential regression sources', action='store', default='HEAD')
+  parser.add_argument(dest='mergeCommit', help='Specify an SHA hash for a merge commit for which git-risk should find potential regression sources', action='store', default='HEAD')
   return parser
 
 def main():
   parser = createParser()
   parsedArgs = parser.parse_args(sys.argv[1:])
-  if not parsedArgs.confFile:
+  if not parsedArgs.confFile or not parsedArgs.mergeCommit:
     parser.print_help()
     return
 
@@ -176,7 +195,21 @@ def main():
   config.read(parsedArgs.confFile)
   searchString = config.get('main', 'ticket-spec')
   gitrisk = GitRisk(searchString, repo=repo)
-  bugs = gitrisk.checkMerge(parser.mergeCommit)
+  (bugs, commitsWithNoTickets) = gitrisk.checkMerge(parsedArgs.mergeCommit)
+
+  outputResults(gitrisk, parsedArgs.mergeCommit, bugs, commitsWithNoTickets)
+
+def outputResults(gitrisk, mergeCommit, bugs, commitsWithNoTickets):
+  print("Tickets potentially affected by:")
+  onelineMessage = gitrisk.getOneLineCommitMessage(mergeCommit)
+  print(onelineMessage + "\n")
+  for bug in bugs:
+    print(bug)
+
+  if (len(commitsWithNoTickets) > 0):
+    print("\nNote: The following commits did not have tickets associated with them (or git-risk\ncouldn't find them), so there might be undocumented issues that have regression(s)\nstemming from these commits' interactions with the merge.\n")
+    for commit in commitsWithNoTickets:
+      print(gitrisk.getOneLineCommitMessage(commit))
 
 if __name__ == '__main__':
   main()
