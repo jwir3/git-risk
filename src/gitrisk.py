@@ -177,6 +177,7 @@ def createParser():
   ''', add_help=True)
   parser.add_argument('-c', '--config', dest='confFile', help='Specify a configuration file', action='store')
   parser.add_argument('-r', '--repository', dest='repo', help='Specify a directory on which to operate', action='store', default=".")
+  parser.add_argument('-q', '--quiet', dest='quietMode', help='Make git-risk use "quiet" mode, which means only the appropriate ticket(s) will be output.', action='store_true', default=False)
   parser.add_argument(dest='mergeCommit', help='Specify an SHA hash for a merge commit for which git-risk should find potential regression sources', action='store', default='HEAD')
   return parser
 
@@ -194,22 +195,25 @@ def main():
   config = configparser.SafeConfigParser()
   config.read(parsedArgs.confFile)
   searchString = config.get('main', 'ticket-spec')
+  quietMode = parsedArgs.quietMode
   gitrisk = GitRisk(searchString, repo=repo)
   (bugs, commitsWithNoTickets) = gitrisk.checkMerge(parsedArgs.mergeCommit)
 
-  outputResults(gitrisk, parsedArgs.mergeCommit, bugs, commitsWithNoTickets)
+  outputResults(gitrisk, quietMode, parsedArgs.mergeCommit, bugs, commitsWithNoTickets)
 
-def outputResults(gitrisk, mergeCommit, bugs, commitsWithNoTickets):
-  print("Tickets potentially affected by:")
-  onelineMessage = gitrisk.getOneLineCommitMessage(mergeCommit)
-  print(onelineMessage + "\n")
+def outputResults(gitrisk, quietMode, mergeCommit, bugs, commitsWithNoTickets):
+  if not quietMode:
+    print("Tickets potentially affected by:")
+    onelineMessage = gitrisk.getOneLineCommitMessage(mergeCommit)
+    print(onelineMessage + "\n")
   for bug in bugs:
     print(bug)
 
-  if (len(commitsWithNoTickets) > 0):
-    print("\nNote: The following commits did not have tickets associated with them (or git-risk\ncouldn't find them), so there might be undocumented issues that have regression(s)\nstemming from these commits' interactions with the merge.\n")
-    for commit in commitsWithNoTickets:
-      print(gitrisk.getOneLineCommitMessage(commit))
+  if not quietMode:
+    if (len(commitsWithNoTickets) > 0):
+      print("\nNote: The following commits did not have tickets associated with them (or git-risk\ncouldn't find them), so there might be undocumented issues that have regression(s)\nstemming from these commits' interactions with the merge.\n")
+      for commit in commitsWithNoTickets:
+        print(gitrisk.getOneLineCommitMessage(commit))
 
 if __name__ == '__main__':
   main()
