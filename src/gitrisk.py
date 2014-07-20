@@ -171,6 +171,20 @@ class GitRisk:
   def getOneLineCommitMessage(self, aCommitSha):
     return self.mRepo.git.log(aCommitSha, oneline=True, n=1)
 
+  def outputResults(self, quietMode, mergeCommit, bugs, commitsWithNoTickets):
+    if not quietMode:
+      print("Tickets potentially affected by:")
+      onelineMessage = self.getOneLineCommitMessage(mergeCommit)
+      print(onelineMessage + "\n")
+    for bug in bugs:
+      print(bug)
+
+    if not quietMode:
+      if (len(commitsWithNoTickets) > 0):
+        print("\nNote: The following commits did not have tickets associated with them (or git-risk\ncouldn't find them), so there might be undocumented issues that have regression(s)\nstemming from these commits' interactions with the merge.\n")
+        for commit in commitsWithNoTickets:
+          print(self.getOneLineCommitMessage(commit))
+
 def createParser():
   parser = argparse.ArgumentParser(description='''
   Parse git log files for potential regression risks after a merge
@@ -199,21 +213,7 @@ def main():
   gitrisk = GitRisk(searchString, repo=repo)
   (bugs, commitsWithNoTickets) = gitrisk.checkMerge(parsedArgs.mergeCommit)
 
-  outputResults(gitrisk, quietMode, parsedArgs.mergeCommit, bugs, commitsWithNoTickets)
-
-def outputResults(gitrisk, quietMode, mergeCommit, bugs, commitsWithNoTickets):
-  if not quietMode:
-    print("Tickets potentially affected by:")
-    onelineMessage = gitrisk.getOneLineCommitMessage(mergeCommit)
-    print(onelineMessage + "\n")
-  for bug in bugs:
-    print(bug)
-
-  if not quietMode:
-    if (len(commitsWithNoTickets) > 0):
-      print("\nNote: The following commits did not have tickets associated with them (or git-risk\ncouldn't find them), so there might be undocumented issues that have regression(s)\nstemming from these commits' interactions with the merge.\n")
-      for commit in commitsWithNoTickets:
-        print(gitrisk.getOneLineCommitMessage(commit))
+  gitrisk.outputResults(quietMode, parsedArgs.mergeCommit, bugs, commitsWithNoTickets)
 
 if __name__ == '__main__':
   main()
