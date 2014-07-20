@@ -11,12 +11,20 @@ class GitRisk:
   mRepoPath = "."
   mRepo = None
   mDebugMode = False
+  mQuietMode = False
 
-  def __init__(self, aSpecString, repo=".", debug=False):
+  def __init__(self, aSpecString, repo=".", debug=False, quiet=False):
     self.mSpecString = aSpecString
     self.mRepoPath = repo
     self.mDebugMode = debug
     self.mRepo = Repo(self.mRepoPath)
+    self.mQuietMode = quiet
+
+  def isInQuietMode(self):
+    return self.mQuietMode
+
+  def setInQuietMode(self, aQuiet):
+    self.mQuietMode = aQuiet
 
   def getTicketNamesFromCommit(self, aCommitObj):
     tickets = set()
@@ -171,15 +179,15 @@ class GitRisk:
   def getOneLineCommitMessage(self, aCommitSha):
     return self.mRepo.git.log(aCommitSha, oneline=True, n=1)
 
-  def outputResults(self, quietMode, mergeCommit, bugs, commitsWithNoTickets):
-    if not quietMode:
+  def outputResults(self, mergeCommit, bugs, commitsWithNoTickets):
+    if not self.isInQuietMode():
       print("Tickets potentially affected by:")
       onelineMessage = self.getOneLineCommitMessage(mergeCommit)
       print(onelineMessage + "\n")
     for bug in bugs:
       print(bug)
 
-    if not quietMode:
+    if not self.isInQuietMode():
       if (len(commitsWithNoTickets) > 0):
         print("\nNote: The following commits did not have tickets associated with them (or git-risk\ncouldn't find them), so there might be undocumented issues that have regression(s)\nstemming from these commits' interactions with the merge.\n")
         for commit in commitsWithNoTickets:
@@ -209,11 +217,10 @@ def main():
   config = configparser.SafeConfigParser()
   config.read(parsedArgs.confFile)
   searchString = config.get('main', 'ticket-spec')
-  quietMode = parsedArgs.quietMode
-  gitrisk = GitRisk(searchString, repo=repo)
+  gitrisk = GitRisk(searchString, repo=repo, quiet=parsedArgs.quietMode)
   (bugs, commitsWithNoTickets) = gitrisk.checkMerge(parsedArgs.mergeCommit)
 
-  gitrisk.outputResults(quietMode, parsedArgs.mergeCommit, bugs, commitsWithNoTickets)
+  gitrisk.outputResults(parsedArgs.mergeCommit, bugs, commitsWithNoTickets)
 
 if __name__ == '__main__':
   main()
