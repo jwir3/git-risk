@@ -4,6 +4,7 @@ import sys
 import re
 import os
 import os.path
+import pkg_resources
 from git import *
 
 class GitRisk:
@@ -142,7 +143,7 @@ class GitRisk:
 
     mergeBase = self.getMergeBase(*commitParentShas)
     # This should not be able to happen...
-    assert mergeBase != None, "there was no merge base found for the commits"
+    assert mergeBase, "there was no merge base found for the commits"
 
     suspectCommits = set()
     for parent in commitParentShas:
@@ -194,19 +195,28 @@ class GitRisk:
           print(self.getOneLineCommitMessage(commit))
 
 def createParser():
+  version = pkg_resources.require('git-risk')[0].version
   parser = argparse.ArgumentParser(description='''
   Parse git log files for potential regression risks after a merge
   ''', add_help=True)
   parser.add_argument('-c', '--config', dest='confFile', help='Specify a configuration file', action='store')
   parser.add_argument('-r', '--repository', dest='repo', help='Specify a directory on which to operate', action='store', default=".")
   parser.add_argument('-q', '--quiet', dest='quietMode', help='Make git-risk use "quiet" mode, which means only the appropriate ticket(s) will be output.', action='store_true', default=False)
-  parser.add_argument(dest='mergeCommit', help='Specify an SHA hash for a merge commit for which git-risk should find potential regression sources', action='store', default='HEAD')
+  parser.add_argument('-g', '--debug', dest='debugMode', help="Make git-risk print out debugging information", action='store_true', default=False)
+  parser.add_argument('-v', '--version', help='Display the version information for git-risk', action='version', version='git-risk version ' + str(version))
+  parser.add_argument(metavar='<commit>', dest='mergeCommit', help='Specify an SHA hash for a merge commit for which git-risk should find potential regression sources', action='store', default='HEAD')
   return parser
+
+def printVersion():
+  version = pkg_resources.require('git-risk')[0].version
+  print("git-risk version " + str(version))
 
 def main():
   parser = createParser()
   parsedArgs = parser.parse_args(sys.argv[1:])
+
   if not parsedArgs.confFile or not parsedArgs.mergeCommit:
+    printVersion()
     parser.print_help()
     return
 
@@ -217,7 +227,7 @@ def main():
   config = configparser.SafeConfigParser()
   config.read(parsedArgs.confFile)
   searchString = config.get('main', 'ticket-spec')
-  gitrisk = GitRisk(searchString, repo=repo, quiet=parsedArgs.quietMode)
+  gitrisk = GitRisk(searchString, repo=repo, quiet=parsedArgs.quietMode, debug=parsedArgs.debugMode)
   (bugs, commitsWithNoTickets) = gitrisk.checkMerge(parsedArgs.mergeCommit)
 
   gitrisk.outputResults(parsedArgs.mergeCommit, bugs, commitsWithNoTickets)
