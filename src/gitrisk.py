@@ -13,12 +13,20 @@ class GitRisk:
   mDebugMode = False
   mQuietMode = False
 
-  def __init__(self, aSpecString, repo=".", debug=False, quiet=False):
-    self.mSpecString = aSpecString
+  def __init__(self, aSpecString=None, repo=".", debug=False, quiet=False):
     self.mRepoPath = repo
     self.mDebugMode = debug
     self.mRepo = Repo(self.mRepoPath)
     self.mQuietMode = quiet
+
+    if not aSpecString:
+      configReader = self.mRepo.config_reader()
+      self.mSpecString = configReader.get_value('gitrisk', 'ticketRegex')
+      self.mSpecString = self.mSpecString.decode('string-escape')
+      self.mSpecString = self.mSpecString.replace('"', '')
+      print('Ticket Regex: ' + str(self.mSpecString))
+      if not self.mSpecString:
+        raise Exception("Unable to find a regular expression for searching tickets")
 
   def isInQuietMode(self):
     return self.mQuietMode
@@ -206,21 +214,29 @@ def createParser():
 def main():
   parser = createParser()
   parsedArgs = parser.parse_args(sys.argv[1:])
-  if not parsedArgs.confFile or not parsedArgs.mergeCommit:
+  if not parsedArgs.mergeCommit:
     parser.print_help()
-    return
+    return 1
 
   repo = '.'
   if parsedArgs.repo:
     repo = parsedArgs.repo
 
-  config = configparser.SafeConfigParser()
-  config.read(parsedArgs.confFile)
-  searchString = config.get('main', 'ticket-spec')
-  gitrisk = GitRisk(searchString, repo=repo, quiet=parsedArgs.quietMode)
-  (bugs, commitsWithNoTickets) = gitrisk.checkMerge(parsedArgs.mergeCommit)
+  if parsedArgs.confFile:
+    config = configparser.SafeConfigParser()
+    config.read(parsedArgs.confFile)
+    searchString = config.get('main', 'ticket-spec')
+    gitrisk = GitRisk(searchString, repo=repo, quiet=parsedArgs.quietMode)
+  else:
+    # try:
+      gitrisk = GitRisk(repo=repo, quiet=parsedArgs.quietMode)
+    # except:
+      # parser.print_help()
+      # return 1
 
+  (bugs, commitsWithNoTickets) = gitrisk.checkMerge(parsedArgs.mergeCommit)
   gitrisk.outputResults(parsedArgs.mergeCommit, bugs, commitsWithNoTickets)
+  return 0
 
 if __name__ == '__main__':
-  main()
+  exit(main())
