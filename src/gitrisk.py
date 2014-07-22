@@ -252,7 +252,6 @@ def main():
       # parser.print_help()
       # return 1
 
-  gitrisk.setDebugMode(True)
   (bugs, commitsWithNoTickets) = gitrisk.checkMerge(parsedArgs.mergeCommit)
   gitrisk.outputResults(parsedArgs.mergeCommit, bugs, commitsWithNoTickets)
   return 0
