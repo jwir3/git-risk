@@ -180,5 +180,10 @@ class TestSpecifications(unittest.TestCase):
     self.assertEquals(expectedCommits, commitsWithoutTickets)
     self.assertEquals(expectedTickets, tickets)
 
+  def test_getConfigFromRepo(self):
+    expectedRegex = "^(\W)*(Issue)(\ )*(\#)*[0-9]+"
+    gitRiskObj = self.mGitRiskModule.GitRisk(repo=self.mGitRepoPath, debug=False)
+    self.assertEquals(expectedRegex, gitRiskObj.getTicketRegex())
+
 if __name__ == '__main__':
   unittest.main()
