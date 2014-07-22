@@ -7,6 +7,18 @@ import os.path
 from git import *
 
 class GitRisk:
+  """
+  Data structure to keep track of "regression risk" of individual merges. Each
+  `GitRisk` object is specific to a given repository. That is, a new `GitRisk`
+  object must be created for each git repository. Once created, though, a `GitRisk`
+  object can be reused for determining the riskiness of several different merges.
+
+  The `GitRisk` object searches through the git log files, starting at the merge
+  commit given to `checkMerge()`, through the best common ancestor of the parents
+  of the merge commit, for tickets specified in the configuration. These ticket
+  numbers are then returned, as it's assumed that these are the tickets that are
+  most at risk for regressions stemming from conflicts in the merge.
+  """
   mSpecString = None
   mRepoPath = "."
   mRepo = None
@@ -29,9 +41,25 @@ class GitRisk:
         raise Exception("Unable to find a regular expression for searching tickets")
 
   def isInQuietMode(self):
+    """
+    Determine if this `GitRisk` object is in "quiet mode." Quiet mode means that
+    only tickets that are potentially at risk of regressions will be reported,
+    nothing else.
+
+    :return: True, if this `GitRisk` object is in "quiet mode", false otherwise.
+    """
+
     return self.mQuietMode
 
   def setInQuietMode(self, aQuiet):
+    """
+    Set the quiet mode option of this `GitRisk` object. Quiet mode means that
+    only tickets that are potentially at risk of regressions will be reported,
+    nothing else.
+
+    :param aQuiet: Parameter specifying whether quiet mode should be turned on
+                   or off.
+    """
     self.mQuietMode = aQuiet
 
   def getTicketNamesFromCommit(self, aCommitObj):
