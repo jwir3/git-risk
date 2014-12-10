@@ -211,7 +211,7 @@ class GitRisk:
           print(self.getOneLineCommitMessage(commit))
 
 def createParser():
-  version = pkg_resources.require('git-risk')[0].version
+  version = pkg_resources.require('gitrisk')[0].version
   parser = argparse.ArgumentParser(description='''
   Parse git log files for potential regression risks after a merge
   ''', add_help=True)
@@ -224,7 +224,7 @@ def createParser():
   return parser
 
 def printVersion():
-  version = pkg_resources.require('git-risk')[0].version
+  version = pkg_resources.require('gitrisk')[0].version
   print("git-risk version " + str(version))
 
 def main():
