@@ -27,6 +27,7 @@ setup(name=progName,
       url=progUrl,
       packages=['gitrisk'],
       entry_points=entryPoints,
-      test_suite='test',
+      test_suite='tests',
       license='Mozilla Public License v2.0',
+      install_requires=requirements
 )

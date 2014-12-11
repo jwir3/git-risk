@@ -2,18 +2,22 @@ import imp
 import unittest
 import zipfile
 import os.path
+from os.path import join
 import os
 import tempfile
 import shutil
 
-class TestSpecifications(unittest.TestCase):
+from gitrisk.gitrisk import GitRisk
+
+class GitRiskTest(unittest.TestCase):
   mGitRepoPath = None
   mGitRiskObj = None
 
   def setUp(self):
     self.mTempDir = tempfile.mkdtemp(prefix='gitRiskTest')
     self.assertTrue(os.path.exists(self.mTempDir))
-    zipFh = open('data/testrepo.zip', 'rb')
+    testRepoZipPath = join(self.__findTestDir(), "testrepo.zip")
+    zipFh = open(testRepoZipPath, 'rb')
     testRepoZip = zipfile.ZipFile(zipFh)
     for name in testRepoZip.namelist():
       testRepoZip.extract(name, self.mTempDir)
@@ -24,16 +28,16 @@ class TestSpecifications(unittest.TestCase):
     specString = "^(\W)*([B|b][U|u][G|g])(\ )*(\#)*[0-9]+"
     self.mGitRepoPath = os.path.join(self.mTempDir, 'testrepo')
     self.assertTrue(os.path.exists(os.path.join(self.mGitRepoPath, "git-risk-info")))
-    self.mGitRiskModule = imp.load_source('gitrisk', '../gitrisk.py')
-    self.mGitRiskObj = self.mGitRiskModule.GitRisk(specString, self.mGitRepoPath, debug=False)
+    self.mGitRiskObj = GitRisk(specString, self.mGitRepoPath, debug=False)
 
   def tearDown(self):
     shutil.rmtree(self.mTempDir)
     self.assertFalse(os.path.exists(self.mTempDir))
 
   def test_JMTicketNames(self):
-    self.mGitRiskObj = self.mGitRiskModule.GitRisk("(JM|jm)-[0-9]+")
-    tickets = self.mGitRiskObj.getTicketNamesFromFile('data/testjmtickets.txt')
+    self.mGitRiskObj = GitRisk("(JM|jm)-[0-9]+")
+    jmTicketPath = join(self.__findTestDir(), "testjmtickets.txt")
+    tickets = self.mGitRiskObj.getTicketNamesFromFile(jmTicketPath)
 
     self.assertEqual(os.path.abspath("."), self.mGitRiskObj.getRepoPath())
 
@@ -44,9 +48,10 @@ class TestSpecifications(unittest.TestCase):
     self.assertEqual('jm-1021', tickets[3])
 
   def test_BugTicketNames(self):
-    gitRisk = self.mGitRiskModule.GitRisk("([B|b][U|u][G|g])\ [0-9]+", os.path.abspath("."), debug=False)
+    gitRisk = GitRisk("([B|b][U|u][G|g])\ [0-9]+", os.path.abspath("."), debug=False)
 
-    tickets = gitRisk.getTicketNamesFromFile('data/bugtickets.txt')
+    bugTicketPath = join(self.__findTestDir(), "bugtickets.txt")
+    tickets = gitRisk.getTicketNamesFromFile(bugTicketPath)
 
     self.assertEqual(os.path.abspath("."), gitRisk.getRepoPath())
 
@@ -182,8 +187,14 @@ class TestSpecifications(unittest.TestCase):
 
   def test_getConfigFromRepo(self):
     expectedRegex = "^(\W)*(Issue)(\ )*(\#)*[0-9]+"
-    gitRiskObj = self.mGitRiskModule.GitRisk(repo=self.mGitRepoPath, debug=False)
+    gitRiskObj = GitRisk(repo=self.mGitRepoPath, debug=False)
     self.assertEquals(expectedRegex, gitRiskObj.getTicketRegex())
+
+  def __findTestDir(self):
+    # Find the file called 'testrepo.zip', starting at the current dir
+    for (root, dirs, files) in os.walk('.'):
+      if 'testrepo.zip' in files:
+        return root
 
 if __name__ == '__main__':
   unittest.main()
