@@ -1,6 +1,9 @@
 git-risk
 =====================
 
+* [![PyPI version](https://badge.fury.io/py/gitrisk.svg)](http://badge.fury.io/py/gitrisk)
+* [![Build Status](https://travis-ci.org/jwir3/git-risk.svg)](https://travis-ci.org/jwir3/git-risk)
+
 A script that allows users of git to determine which ticket(s) included in a merge might be at risk of regressions.
 
 Usage
