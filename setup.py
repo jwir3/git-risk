@@ -14,7 +14,8 @@ entryPoints = {
 }
 
 requirements = [
-  'configparser>=3.3.0'
+  'configparser>=3.3.0',
+  'GitPython>=0.3.2'
 ]
 
 curDir = os.path.dirname(os.path.realpath(__file__))
