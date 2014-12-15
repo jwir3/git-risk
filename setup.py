@@ -3,12 +3,12 @@ import os
 import os.path
 
 progName = 'gitrisk'
-progVersion = '0.0.3'
+progVersion = '0.0.4'
 progDescription = 'A tool for determining which tickets included in a merge might be at risk of regressions'
 progAuthor = 'Scott Johnson'
 progEmail = 'jaywir3@gmail.com'
 progUrl = 'http://github.com/jwir3/git-risk'
-downloadUrl = 'https://github.com/jwir3/git-risk/archive/gitrisk-v0.0.3.tar.gz'
+downloadUrl = 'https://github.com/jwir3/git-risk/archive/gitrisk-v0.0.4.tar.gz'
 entryPoints = {
   'console_scripts': [ 'git-risk = gitrisk.gitrisk:main' ]
 }
