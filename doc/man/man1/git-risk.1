@@ -1,0 +1,45 @@
+.\" Manpage for git-risk.
+.\" Contact jaywir3@gmail.com to correct errors or typos.
+.TH man 8 "14 Dec 2014" "0.0.4" "git-risk manpage"
+.SH NAME
+git-risk \- determine which tickets might be at risk of regressions from a git merge.
+.SH SYNOPSIS
+git-risk <options> <commit-hash>
+.SH DESCRIPTION
+git-risk is a command that will determine which tickets are at risk of
+regressions from a merge commit. It determines the least common ancestor of the
+commits included in the given merge and reports all tickets identified in the
+commit messages for all commits in between each of the merged commits and their
+least common ancestor.
+
+The theory is that, for a given merge commit, regressions will typically be
+seen in tickets that weren't previously merged into the main development trunk.
+Tickets that have already been merged into the main development trunk, and are
+tested prior to the merge in question, are at a lower risk for regressions. As
+such, git-risk provides a list of all tickets that haven't yet been tested after
+the merge in question, so they can be tested to ensure lower probability of
+regressions in the happy-path of the code.
+.SH OPTIONS
+.IP -h
+Display brief help on the command line
+.IP --help
+Display this man page
+.IP -c <path>, --config <path>
+Specify the path to the git-risk configuration file.
+.IP -r <repository-path>, --repository <repository-path>
+Specify the path to the repository on which to operate. Uses "." by default.
+.IP -q, --quiet
+Operate in "quiet" mode, which means only the appropriate tickets will be output.
+.IP -g, --debug
+Print out debugging information while operating.
+.IP -v, --version
+Display the version number and exit.
+.SH SEE ALSO
+git(1), git-bisect(1)
+.SH REPORTING BUGS
+Issues can be reported via the <\fBgit-risk issue tracker[1]\fR>
+.SH NOTES
+.IP 1. git-risk issue tracker
+http://www.github.com/jwir3/git-risk/issues
+.SH AUTHOR
+Scott Johnson (jaywir3@gmail.com)
