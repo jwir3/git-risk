@@ -1,16 +1,19 @@
 .\" Manpage for git-risk.
 .\" Contact jaywir3@gmail.com to correct errors or typos.
-.TH man 8 "14 Dec 2014" "0.0.4" "git-risk manpage"
+.TH man 8 "3 Jun 2015" "0.1.0" "git-risk manpage"
 .SH NAME
-git-risk \- determine which tickets might be at risk of regressions from a git merge.
+git-risk \- determine which tickets might be at risk of regressions from a git merge
+or within a range of commits.
 .SH SYNOPSIS
-git-risk <options> <commit-hash>
+git-risk <options> [-c <commit-hash>]
 .SH DESCRIPTION
 git-risk is a command that will determine which tickets are at risk of
-regressions from a merge commit. It determines the least common ancestor of the
-commits included in the given merge and reports all tickets identified in the
-commit messages for all commits in between each of the merged commits and their
-least common ancestor.
+regressions from a range of commits. It is most useful when used after a merge
+to determine which tickets were affected by the merge by searching through the
+range [<merge-commit>..<least common ancestor(merge-commit)>]. In this mode, it
+determines the least common ancestor of the commits included in the given merge
+and reports all tickets identified in the commit messages for all commits in
+between each of the merged commits and their least common ancestor.
 
 The theory is that, for a given merge commit, regressions will typically be
 seen in tickets that weren't previously merged into the main development trunk.
@@ -19,21 +22,45 @@ tested prior to the merge in question, are at a lower risk for regressions. As
 such, git-risk provides a list of all tickets that haven't yet been tested after
 the merge in question, so they can be tested to ensure lower probability of
 regressions in the happy-path of the code.
+
+git-risk can also be used to report which tickets were involved (or, at least
+mentioned) within any range of commits.
+
+For any of these to work, you must have a standard commit message format that
+includes the issue to which a given commit relates. Extraction of the ticket
+from a commit message is performed using a regular expression, so a great deal
+of flexibility is available.
+
+You can specify the desired regular expression to use for extracting ticket
+numbers from commit messages using the \fIticketRegex\fR parameter:
+.PP
+.nf
+.RS
+[gitrisk]
+  ticketRegex = ...
+.RE
+.fi
 .SH OPTIONS
-.IP -h
+.IP \-h
 Display brief help on the command line
-.IP --help
+.IP \-\-help
 Display this man page
-.IP -c <path>, --config <path>
+.IP \-f <path>, \-\-config\-file <path>
 Specify the path to the git-risk configuration file.
-.IP -r <repository-path>, --repository <repository-path>
+.IP \-r <repository-path>, \-\-repository <repository\-path>
 Specify the path to the repository on which to operate. Uses "." by default.
-.IP -q, --quiet
+.IP \-c <commitHash>, \-\-commit <commitHash>
+Specify the commit on which to operate. If <commitHash> is a merge commit, the
+algorithm will run on the range [commitHash..<merge base of commitHash's
+parents>]. If <commitHash> is not a merge commit, then the algorithm will operate
+on the range [HEAD..<commitHash>]. By default, <commitHash> is equivalent to HEAD.
+.IP \-q, \-\-quiet
 Operate in "quiet" mode, which means only the appropriate tickets will be output.
-.IP -g, --debug
+.IP \-g, \-\-debug
 Print out debugging information while operating.
-.IP -v, --version
+.IP \-v, \-\-version
 Display the version number and exit.
+
 .SH SEE ALSO
 git(1), git-bisect(1)
 .SH REPORTING BUGS
