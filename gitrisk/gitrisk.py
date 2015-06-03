@@ -20,10 +20,24 @@ class GitRisk:
     self.mDebugMode = debug
     self.mRepo = Repo(self.mRepoPath)
     self.mQuietMode = quiet
+    self.mRegexGroup = 0
 
     if not aSpecString:
       configReader = self.mRepo.config_reader()
+
+      if not configReader.has_section('gitrisk'):
+        print "A `gitrisk` section was not found in the git configuration for this repository. You will need to add one."
+        sys.exit(1)
+
+      if not configReader.has_option('gitrisk', 'ticketRegex'):
+        print "A `ticketRegex` option was not found in the git configuration for this repository. You will need to add one to the `gitrisk` section."
+        sys.exit(1)
+
+      if configReader.has_option('gitrisk', 'ticketNumberRegexGroup'):
+          self.mRegexGroup = configReader.get_value('gitrisk', 'ticketNumberRegexGroup')
+
       self.mSpecString = configReader.get_value('gitrisk', 'ticketRegex')
+
       self.mSpecString = self.mSpecString.decode('string-escape')
       self.mSpecString = self.mSpecString.replace('"', '')
       if not self.mSpecString:
@@ -71,18 +85,23 @@ class GitRisk:
     return results
 
   def getTicketNamesFromLine(self, aLine):
+    if self.mDebugMode:
+      print("***** DEBUG: Spec String: " + self.mSpecString)
+      print("***** DEBUG: aLine: " + aLine)
+      print("***** DEBUG: ticket group: " + str(self.mRegexGroup))
+
     result = re.search(self.mSpecString, aLine)
     if not result and self.mDebugMode:
-      print("Line was empty?")
+      print("***** DEBUG: Line was empty")
     elif self.mDebugMode:
-      print("Result: " + str(result.group(0)))
+      print("***** DEBUG: Result: " + str(result.group(self.mRegexGroup)))
 
     # Handle the case where nothing was found in the commit message that
     # matched the specification.
     if not result:
       return None
 
-    return result.group(0).rstrip().lstrip()
+    return result.group(self.mRegexGroup).rstrip().lstrip()
 
   def isMergeCommit(self, aCommitObj):
     return len(aCommitObj.parents) > 1
@@ -220,7 +239,7 @@ def createParser():
   parser.add_argument('-q', '--quiet', dest='quietMode', help='Make git-risk use "quiet" mode, which means only the appropriate ticket(s) will be output.', action='store_true', default=False)
   parser.add_argument('-g', '--debug', dest='debugMode', help="Make git-risk print out debugging information", action='store_true', default=False)
   parser.add_argument('-v', '--version', help='Display the version information for git-risk', action='version', version='git-risk version ' + str(version))
-  parser.add_argument(metavar='<commit>', dest='mergeCommit', help='Specify an SHA hash for a merge commit for which git-risk should find potential regression sources', action='store', default='HEAD')
+  parser.add_argument('-m', '--merge-commit', metavar='<commit>', dest='mergeCommit', help='Specify an SHA hash for a merge commit for which git-risk should find potential regression sources', action='store', default='HEAD')
   return parser
 
 def printVersion():

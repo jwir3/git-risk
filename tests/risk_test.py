@@ -186,9 +186,16 @@ class GitRiskTest(unittest.TestCase):
     self.assertEquals(expectedTickets, tickets)
 
   def test_getConfigFromRepo(self):
-    expectedRegex = "^(\W)*(Issue)(\ )*(\#)*[0-9]+"
+    expectedRegex = "^(\W)*(Bug)(\ )*((\#)*[0-9]+)"
     gitRiskObj = GitRisk(repo=self.mGitRepoPath, debug=False)
     self.assertEquals(expectedRegex, gitRiskObj.getTicketRegex())
+
+  def test_ticketRegexGroup(self):
+      gitRiskObj = GitRisk(repo=self.mGitRepoPath, debug=False)
+      (tickets, commitsWithoutTickets) = gitRiskObj.checkMerge('9cfed13838c730c748c482be0ea78e65883e6b94')
+      expectedTickets = set(['143'])
+      self.assertEquals(expectedTickets, tickets)
+
 
   def __findTestDir(self):
     # Find the file called 'testrepo.zip', starting at the current dir
