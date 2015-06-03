@@ -6,6 +6,24 @@ git-risk
 
 A script that allows users of git to determine which ticket(s) included in a merge might be at risk of regressions.
 
+Setup
+---------------------
+You will need to add the following section to your `.git/config` (non-global),
+or `~/.gitconfig` (global) files:
+```
+[gitrisk]
+  ticketRegex = <ticket regular expression>
+```
+
+`<ticket regular expression>` can be any regular expression to filter the ticket
+identifiers out of commit messages. There are some examples in `conf/default.conf`.
+
+You can add this to your git config easily with:
+```
+$ git config [--global] gitrisk.ticketRegex <ticket regular expression>
+```
+
+
 Usage
 ---------------------
 `git-risk` assumes that you have certain data about a series of commits in
@@ -14,15 +32,12 @@ within `git` itself. `git-risk` can, however, be run as a standalone application
 from the command line. Both methods are described below.
 
 ###Command-Line Usage
-`git-risk [-qm] <merge-commit hash>`
+`git-risk [-qm] -c <merge-commit hash>`
 
 Where:
 * `<merge-commit hash>` is an SHA hash that was a merge commit
 * `-q`: Flag used to indicate that "quiet" mode should be used, which means only
         the appropriate ticket(s) will be output.
-* `-m`: Flag used to indicate that `git-risk` should quickly return a "positive"
-        status when run on a commit that isn't a merge commit (used in conjunction
-        with the git hook(s) described below).
 
 The output of this command will give you a series of tickets/issues/bugs that
 can be checked for regressions:
@@ -66,7 +81,3 @@ time being) with `git-risk`. The most logical place to use `git-risk` is the
 ```
    git-risk -m `git rev-list -1 HEAD`
 ```
-
-That's it! The `-m` option is only to specify that a 'pass' result should be
-returned if the commit in question isn't a merge commit (since git-risk can't
-automatically detect issues likely to be affected by a non-merge commit.

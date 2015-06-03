@@ -20,10 +20,24 @@ class GitRisk:
     self.mDebugMode = debug
     self.mRepo = Repo(self.mRepoPath)
     self.mQuietMode = quiet
+    self.mRegexGroup = 0
 
     if not aSpecString:
       configReader = self.mRepo.config_reader()
+
+      if not configReader.has_section('gitrisk'):
+        print "A `gitrisk` section was not found in the git configuration for this repository. You will need to add one."
+        sys.exit(1)
+
+      if not configReader.has_option('gitrisk', 'ticketRegex'):
+        print "A `ticketRegex` option was not found in the git configuration for this repository. You will need to add one to the `gitrisk` section."
+        sys.exit(1)
+
+      if configReader.has_option('gitrisk', 'ticketNumberRegexGroup'):
+          self.mRegexGroup = configReader.get_value('gitrisk', 'ticketNumberRegexGroup')
+
       self.mSpecString = configReader.get_value('gitrisk', 'ticketRegex')
+
       self.mSpecString = self.mSpecString.decode('string-escape')
       self.mSpecString = self.mSpecString.replace('"', '')
       if not self.mSpecString:
@@ -71,21 +85,31 @@ class GitRisk:
     return results
 
   def getTicketNamesFromLine(self, aLine):
+    if self.mDebugMode:
+      print("***** DEBUG: Spec String: " + self.mSpecString)
+      print("***** DEBUG: aLine: " + aLine)
+      print("***** DEBUG: ticket group: " + str(self.mRegexGroup))
+
     result = re.search(self.mSpecString, aLine)
     if not result and self.mDebugMode:
-      print("Line was empty?")
+      print("***** DEBUG: Line was empty")
     elif self.mDebugMode:
-      print("Result: " + str(result.group(0)))
+      print("***** DEBUG: Result: " + str(result.group(self.mRegexGroup)))
 
     # Handle the case where nothing was found in the commit message that
     # matched the specification.
     if not result:
       return None
 
-    return result.group(0).rstrip().lstrip()
+    return result.group(self.mRegexGroup).rstrip().lstrip()
 
-  def isMergeCommit(self, aCommitObj):
-    return len(aCommitObj.parents) > 1
+  def isMergeCommit(self, aCommit):
+    if (type(aCommit) is str):
+      commit = self.getCommitFromHash(aCommit)
+    else:
+      commit = aCommit
+
+    return len(commit.parents) > 1
 
   def getRepoPath(self):
     return os.path.abspath(self.mRepoPath)
@@ -170,15 +194,44 @@ class GitRisk:
 
     return suspectCommits
 
+  def getAllSuspectCommitsInRange(self, aFromHash, aToHash):
+    commitFrom = self.getCommitFromHash(aFromHash)
+    commitTo = self.getCommitFromHash(aToHash)
+
+    # There should be a commit that exists with these hashes
+    assert commitFrom, "there is no commit with shaHash: " + aFromHash
+    assert commitTo, "there is no commit with shaHash: " + aToHash
+
+    initialRange = [commitFrom, commitTo]
+
+    mergeBase = self.getMergeBase(*initialRange)
+
+    # This should not be able to happen...
+    assert mergeBase, "there was no merge base found for the commits"
+
+    suspectCommits = set()
+    for commit in initialRange:
+      singlePathSuspects = self.findSuspectCommits(self.getCommitFromHash(commit), mergeBase)
+      suspectCommits = suspectCommits.union(singlePathSuspects)
+
+    return suspectCommits
+
+  def checkCommitRange(self, aStartCommit, aEndCommit):
+      suspects = self.getAllSuspectCommitsInRange(aStartCommit, aEndCommit)
+      return self._checkSuspectCommits(suspects)
+
   def checkMerge(self, shaHash):
     if self.mDebugMode:
       print("****** TICKET SPEC Ticket Spec String: " + str(self.getTicketRegex()))
 
     suspects = self.getAllSuspectCommitsFromMerge(shaHash)
+    return self._checkSuspectCommits(suspects)
 
+
+  def _checkSuspectCommits(self, aSuspects):
     allTickets = set()
     commitsWithoutTickets = set()
-    for suspectCommit in suspects:
+    for suspectCommit in aSuspects:
       tickets = self.getTicketNamesFromCommit(suspectCommit)
       if not tickets:
         # We didn't find a ticket for this commit. This could be expected, though,
@@ -196,10 +249,10 @@ class GitRisk:
   def getOneLineCommitMessage(self, aCommitSha):
     return self.mRepo.git.log(aCommitSha, oneline=True, n=1)
 
-  def outputResults(self, mergeCommit, bugs, commitsWithNoTickets):
+  def outputResults(self, commitHash, bugs, commitsWithNoTickets):
     if not self.isInQuietMode():
       print("Tickets potentially affected by:")
-      onelineMessage = self.getOneLineCommitMessage(mergeCommit)
+      onelineMessage = self.getOneLineCommitMessage(commitHash)
       print(onelineMessage + "\n")
     for bug in bugs:
       print(bug)
@@ -213,14 +266,14 @@ class GitRisk:
 def createParser():
   version = pkg_resources.require('gitrisk')[0].version
   parser = argparse.ArgumentParser(description='''
-  Parse git log files for potential regression risks after a merge
+  Parse git log files for potential regression risks in a given range or after a merge
   ''', add_help=True)
-  parser.add_argument('-c', '--config', dest='confFile', help='Specify a configuration file', action='store')
+  parser.add_argument('-f', '--config-file', dest='confFile', help='Specify a configuration file', action='store')
   parser.add_argument('-r', '--repository', dest='repo', help='Specify a directory on which to operate', action='store', default=".")
   parser.add_argument('-q', '--quiet', dest='quietMode', help='Make git-risk use "quiet" mode, which means only the appropriate ticket(s) will be output.', action='store_true', default=False)
   parser.add_argument('-g', '--debug', dest='debugMode', help="Make git-risk print out debugging information", action='store_true', default=False)
   parser.add_argument('-v', '--version', help='Display the version information for git-risk', action='version', version='git-risk version ' + str(version))
-  parser.add_argument(metavar='<commit>', dest='mergeCommit', help='Specify an SHA hash for a merge commit for which git-risk should find potential regression sources', action='store', default='HEAD')
+  parser.add_argument('-c', '--commit', metavar='<commit-hash>', dest='commitHash', help='Specify an SHA hash for a commit on which to operate.', action='store', default='HEAD')
   return parser
 
 def printVersion():
@@ -231,7 +284,7 @@ def main():
   parser = createParser()
   parsedArgs = parser.parse_args(sys.argv[1:])
 
-  if not parsedArgs.mergeCommit:
+  if not parsedArgs.commitHash:
     printVersion()
     parser.print_help()
     return 1
@@ -252,8 +305,14 @@ def main():
       # parser.print_help()
       # return 1
 
-  (bugs, commitsWithNoTickets) = gitrisk.checkMerge(parsedArgs.mergeCommit)
-  gitrisk.outputResults(parsedArgs.mergeCommit, bugs, commitsWithNoTickets)
+  # If the commit given on the command line is a merge commit, then we'll check
+  # the merge. Otherwise, we'll check for a range HEAD..<commit>
+  if gitrisk.isMergeCommit(parsedArgs.commitHash):
+      (bugs, commitsWithNoTickets) = gitrisk.checkMerge(parsedArgs.commitHash)
+  else:
+      (bugs, commitsWithNoTickets) = gitrisk.checkCommitRange('HEAD', parsedArgs.commitHash)
+
+  gitrisk.outputResults(parsedArgs.commitHash, bugs, commitsWithNoTickets)
   return 0
 
 if __name__ == '__main__':
